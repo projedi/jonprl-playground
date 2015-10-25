@@ -1,0 +1,8 @@
+Operator exists_uni : (0; 1).
+
+[exists_uni(T; x.P[x])] =def= [(x : T) * P[x] * {y : T} P[y] => =(x; y; T)].
+
+Theorem exists_uni_wf : [{T : U{i}} {P : T -> U{i}} member(exists_uni(T; x.P x); U{i})] {
+  unfold <exists_uni>;
+  auto;
+}.
