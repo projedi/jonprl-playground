@@ -1,0 +1,85 @@
+Infix 20 "∈" := member.
+Infix 40 "~" := ceq.
+
+Theorem not-wf : [{x : U{i}} not(x) ∈ U{i}] {
+  unfold <member not implies>;
+  auto
+}.
+Resource wf += { wf-lemma <not-wf> }.
+
+Operator decidable-halting : (0).
+[decidable-halting(x)] =def= [(x ~ bot) + not(x ~ bot)].
+
+Theorem decidable-halting-wf : [{x : base} decidable-halting(x) ∈ U{i}] {
+  unfold <member decidable-halting>;
+  auto
+}.
+Resource wf += { wf-lemma <decidable-halting-wf> }.
+
+Operator halts-type : ().
+[halts-type] =def= [(x : base) -> decidable-halting(x)].
+
+Theorem halts-type-wf : [halts-type ∈ U{i}] {
+  unfold <member halts-type>;
+  auto
+}.
+Resource wf += { wf-lemma <halts-type-wf> }.
+
+Operator rhalts : (0).
+[rhalts(halts)] =def= [lam(x. decide(halts (x x); _. <>; _. bot))].
+
+Theorem halting-problem : [not(halts-type)] {
+  unfold <not implies>;
+  intro <x> @i;
+  aux { auto; };
+  pointwise-functionality <x> <halts, _, halts-wf>;
+  aux { auto; };
+  assert [{y : decidable-halting(rhalts(halts) rhalts(halts)) | y ~ halts (rhalts(halts) rhalts(halts)) }] <H>;
+  aux {
+    intro [halts (rhalts(halts) rhalts(halts))] @i;
+    unfold <member>;
+    auto;
+    eq-cd [(a : base) decidable-halting(a)];
+    unfold <halts-type>;
+    auto;
+  };
+
+  elim <H> <y, yeq>;
+  unfold <decidable-halting>;
+  elim <y> <s, ns>;
+
+  @{ [s : rhalts(halts) rhalts(halts) ~ bot |- _] =>
+       assert [rhalts(halts) rhalts(halts) ~ <>] <ns'>;
+       aux {
+         unfold <rhalts>;
+         step;
+         chyp-subst <- <yeq>;
+         step;
+         auto;
+       };
+       assert [not(rhalts(halts) rhalts(halts) ~ bot)] <ns>;
+       aux {
+         auto;
+         assert [<> ~ bot] <nonsense>;
+         aux {
+           chyp-subst <- <ns'>;
+           chyp-subst <- <x'>;
+           auto
+         };
+         elim <nonsense>;
+         auto;
+       }
+   | [ns : not(rhalts(halts) rhalts(halts) ~ bot) |- _] =>
+       assert [rhalts(halts) rhalts(halts) ~ bot] <s>;
+       aux {
+         unfold <rhalts>;
+         step;
+         chyp-subst <- <yeq>;
+         step;
+         auto;
+       }
+   };
+   unfold <not implies>;
+   elim <ns> [s];
+   auto;
+}.
